@@ -160,15 +160,6 @@ function RoastPage() {
                 <Input id="currentTemp" type="number" inputMode="numeric" value={roastData.currentTemp} onChange={(e) => setRoastData((prev) => ({ ...prev, currentTemp: e.target.value }))} placeholder="" className="border-amber-200 text-center text-lg font-bold pr-12" disabled={isFinished} />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold pointer-events-none">°C</span>
               </div>
-              <div className="flex flex-col justify-center">
-                <div className="flex gap-2"><div className="text-center"><div className="text-xs text-amber-600 font-bold">RoR</div><div className="text-sm font-mono text-amber-800">${currentRor || "--"}°C/min</div></div><div className="text-center"><div className="text-xs text-amber-600 font-bold">PreRoR</div><div className="text-sm font-mono text-amber-800">${preRor || "--"}°C/min</div></div></div>
-                <div className="text-sm font-mono text-amber-800">{currentRor ? `${currentRor}°C/min` : '--'}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        {!isFinished && (
-          <>
             <Card id="phase-buttons" className="mb-4 border-amber-200 bg-white/90 shadow-md">
               <CardContent className="space-y-3 py-4">
                 <div className="grid grid-cols-2 gap-3">
