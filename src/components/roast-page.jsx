@@ -140,8 +140,8 @@ function RoastPage() {
   }, [isRunning])
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4 flex flex-col overflow-x-hidden">
-      <div className="mx-auto max-w-md flex-1 overflow-y-auto pb-56">
+    <main className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 px-4 pb-20 flex flex-col overflow-x-hidden">
+      <div className="mx-auto max-w-md w-full flex-1 overflow-y-auto">
         <div className="mb-4 flex justify-center">
           <AppLogo />
         </div>
