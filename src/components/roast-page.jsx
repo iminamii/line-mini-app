@@ -128,6 +128,8 @@ function RoastPage() {
               selectedBaseTemp={selectedBaseTemp}
               onBaseTempChange={setSelectedBaseTemp}
               onRecordTemperature={(temp) => {
+                // 現在のRoRをPreRoRとして保存してから新しいRoRを計算
+                setPreRor(currentRor)
                 const ror = calculateRor(temp, seconds)
                 setCurrentRor(ror)
                 setLastTempRecord({ temp, time: seconds })
