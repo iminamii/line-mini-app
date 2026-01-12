@@ -186,6 +186,8 @@ function RoastPage() {
                 </div>
                 <div className="space-y-1"><Label htmlFor="middlePoint" className="text-sm text-amber-900">中点</Label><Input id="middlePoint" type="text" value={roastData.middlePoint} onChange={(e) => setRoastData((prev) => ({ ...prev, middlePoint: e.target.value }))} className="border-amber-200" placeholder="中点温度" /></div>
                 <div className="space-y-1"><Label htmlFor="roastMemo" className="text-sm text-amber-900">メモ</Label><Textarea id="roastMemo" value={roastData.memo} onChange={(e) => setRoastData((prev) => ({ ...prev, memo: e.target.value }))} className="border-amber-200 resize-none" rows={2} /></div>
+              </CardContent>
+            </Card>
           </>
         )}
         {isFinished && (
