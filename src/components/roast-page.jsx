@@ -128,7 +128,6 @@ function RoastPage() {
               selectedBaseTemp={selectedBaseTemp}
               onBaseTempChange={setSelectedBaseTemp}
               onRecordTemperature={(temp) => {
-                // 現在のRoRをPreRoRとして保存してから新しいRoRを計算
                 setPreRor(currentRor)
                 const ror = calculateRor(temp, seconds)
                 setCurrentRor(ror)
@@ -206,10 +205,8 @@ function RoastPage() {
             <CardContent className="space-y-4 py-6">
               <h3 className="font-bold text-green-800">焙煎完了</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded p-3"><div className="flex gap-2"><div className="text-center"><div className="text-xs text-amber-600 font-bold">RoR</div><div className="text-sm font-mono text-amber-800">${currentRor || "--"}°C/min</div></div><div className="text-center"><div className="text-xs text-amber-600 font-bold">PreRoR</div><div className="text-sm font-mono text-amber-800">${preRor || "--"}°C/min</div></div></div><div className="text-lg font-mono text-amber-800">{currentRor ? `${currentRor}°C/min` : '--'}</div></div>
-                <div className="bg-white rounded p-3"><div className="text-xs text-amber-600 font-bold">PreRoR</div><div className="text-lg font-mono text-amber-800">{preRor ? `${preRor}°C/min` : '--'}</div></div>
-              </div>
-              <div className="space-y-1 rounded bg-white p-3 text-sm">
+                <div className="bg-white rounded p-3"><div className="text-xs text-amber-600 font-bold">RoR</div><div className="text-lg font-mono text-amber-800">{currentRor ? `${currentRor}°C/min` : '--'}</div></div>
+                <div className="space-y-1 rounded bg-white p-3 text-sm">
                 {roastData.events.map((event, index) => (
                   <div key={index} className="flex justify-between text-amber-900">
                     <span>{event.type}</span>
