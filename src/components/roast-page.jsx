@@ -206,15 +206,17 @@ function RoastPage() {
               <h3 className="font-bold text-green-800">焙煎完了</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white rounded p-3"><div className="text-xs text-amber-600 font-bold">RoR</div><div className="text-lg font-mono text-amber-800">{currentRor ? `${currentRor}°C/min` : '--'}</div></div>
-                <div className="space-y-1 rounded bg-white p-3 text-sm">
-                {roastData.events.map((event, index) => (
+                <div className="bg-white rounded p-3">
+                  <div className="space-y-1 text-sm">
+                    {roastData.events.map((event, index) => (
                   <div key={index} className="flex justify-between text-amber-900">
                     <span>{event.type}</span>
                     <span className="font-mono">{formatTime(event.time)}{event.temperature && ` / ${event.temperature}°C`}</span>
                   </div>
                 ))}
-              </div>
-            </CardContent>
+                  </div>
+                </div>
+              </CardContent>
           </Card>
         )}
       </div>
