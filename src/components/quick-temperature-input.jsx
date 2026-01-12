@@ -108,7 +108,7 @@ function QuickTemperatureInput({
       <div id="quick-temp-upper" className="mb-2">
         <div
           ref={scrollContainerRef}
-          className="flex gap-1 overflow-x-auto py-2 px-1 scrollbar-hide"
+          className="flex gap-1 overflow-x-auto py-2 px-1 scrollbar-hide overflow-x-hidden"
           style={{ scrollSnapType: 'x mandatory' }}
         >
           {Array.from({ length: 31 }, (_, i) => i * 10).map((value) => (
