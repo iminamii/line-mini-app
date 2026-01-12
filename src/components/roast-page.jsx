@@ -142,7 +142,7 @@ function RoastPage() {
               ambientTemp={roastData.temperature}
               onStartRoast={() => {
                 if (roastData.temperature && parseInt(roastData.temperature) > 0) {
-                  addEvent(`気温: ${roastData.temperature}°C`, parseInt(roastData.temperature))
+                  addEvent(`気温: ${roastData.temperature}°C`, parseInt(roastData.temperature), null)
                   setLastTempRecord({ temp: parseInt(roastData.temperature), time: 0 })
                 }
               }}
@@ -173,17 +173,17 @@ function RoastPage() {
             <Card id="phase-buttons" className="mb-4 border-amber-200 bg-white/90 shadow-md">
               <CardContent className="space-y-3 py-4">
                 <div className="grid grid-cols-2 gap-3">
-                  {!dryEndDone ? <Button onClick={() => { setDryEndDone(true); addEvent('ドライエンド'); if (lastTempRecord.temp !== null) setPreRorTempRecord({ temp: lastTempRecord.temp, time: seconds }) }} className="bg-amber-600 text-white hover:bg-amber-700">ドライエンド</Button> : <Button disabled className="bg-amber-200 text-amber-600">ドライエンド済</Button>}
-                  {dryEndDone && !goldPointDone ? <Button onClick={() => { setGoldPointDone(true); addEvent('ゴールドポイント') }} className="bg-yellow-600 text-white hover:bg-yellow-700">ゴールドポイント</Button> : goldPointDone ? <Button disabled className="bg-yellow-200 text-yellow-700">ゴールドポイント済</Button> : <div />}
+                  {!dryEndDone ? <Button onClick={() => { setDryEndDone(true); addEvent('ドライエンド', null, null); if (lastTempRecord.temp !== null) setPreRorTempRecord({ temp: lastTempRecord.temp, time: seconds }) }} className="bg-amber-600 text-white hover:bg-amber-700">ドライエンド</Button> : <Button disabled className="bg-amber-200 text-amber-600">ドライエンド済</Button>}
+                  {dryEndDone && !goldPointDone ? <Button onClick={() => { setGoldPointDone(true); addEvent('ゴールドポイント', null, null) }} className="bg-yellow-600 text-white hover:bg-yellow-700">ゴールドポイント</Button> : goldPointDone ? <Button disabled className="bg-yellow-200 text-yellow-700">ゴールドポイント済</Button> : <div />}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {!firstCrackStartDone ? <Button onClick={() => { setFirstCrackStartDone(true); addEvent('1ハゼ開始') }} className="bg-orange-600 text-white hover:bg-orange-700">1ハゼ開始</Button> : <Button disabled className="bg-orange-200 text-orange-700">1ハゼ開始済</Button>}
-                  {firstCrackStartDone && !firstCrackEndDone ? <Button onClick={() => { setFirstCrackEndDone(true); addEvent('1ハゼ終了') }} className="bg-orange-700 text-white hover:bg-orange-800">1ハゼ終了</Button> : firstCrackEndDone ? <Button disabled className="bg-orange-200 text-orange-700">1ハゼ終了済</Button> : <div />}
+                  {!firstCrackStartDone ? <Button onClick={() => { setFirstCrackStartDone(true); addEvent('1ハゼ開始', null, null) }} className="bg-orange-600 text-white hover:bg-orange-700">1ハゼ開始</Button> : <Button disabled className="bg-orange-200 text-orange-700">1ハゼ開始済</Button>}
+                  {firstCrackStartDone && !firstCrackEndDone ? <Button onClick={() => { setFirstCrackEndDone(true); addEvent('1ハゼ終了', null, null) }} className="bg-orange-700 text-white hover:bg-orange-800">1ハゼ終了</Button> : firstCrackEndDone ? <Button disabled className="bg-orange-200 text-orange-700">1ハゼ終了済</Button> : <div />}
                 </div>
                 {firstCrackStartDone && (
                   <div className="grid grid-cols-2 gap-3">
-                    {!secondCrackStartDone ? <Button onClick={() => { setSecondCrackStartDone(true); addEvent('2ハゼ開始') }} className="bg-red-600 text-white hover:bg-red-700">2ハゼ開始</Button> : <Button disabled className="bg-red-200 text-red-700">2ハゼ開始済</Button>}
-                    {secondCrackStartDone && !secondCrackEndDone ? <Button onClick={() => { setSecondCrackEndDone(true); addEvent('2ハゼ終了') }} className="bg-red-700 text-white hover:bg-red-800">2ハゼ終了</Button> : secondCrackEndDone ? <Button disabled className="bg-red-200 text-red-700">2ハゼ終了済</Button> : <div />}
+                    {!secondCrackStartDone ? <Button onClick={() => { setSecondCrackStartDone(true); addEvent('2ハゼ開始', null, null) }} className="bg-red-600 text-white hover:bg-red-700">2ハゼ開始</Button> : <Button disabled className="bg-red-200 text-red-700">2ハゼ開始済</Button>}
+                    {secondCrackStartDone && !secondCrackEndDone ? <Button onClick={() => { setSecondCrackEndDone(true); addEvent('2ハゼ終了', null, null) }} className="bg-red-700 text-white hover:bg-red-800">2ハゼ終了</Button> : secondCrackEndDone ? <Button disabled className="bg-red-200 text-red-700">2ハゼ終了済</Button> : <div />}
                   </div>
                 )}
               </CardContent>
@@ -204,14 +204,12 @@ function RoastPage() {
           <Card className="mb-4 border-green-200 bg-green-50 shadow-md">
             <CardContent className="space-y-4 py-6">
               <h3 className="font-bold text-green-800">焙煎完了</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded p-3"><div className="text-xs text-amber-600 font-bold">RoR</div><div className="text-lg font-mono text-amber-800">{currentRor ? `${currentRor}°C/min` : '--'}</div></div>
-                <div className="bg-white rounded p-3">
-                  <div className="space-y-1 text-sm">
-                    {roastData.events.map((event, index) => (
+              <div className="bg-white rounded p-3">
+                <div className="space-y-1 text-sm">
+                  {roastData.events.map((event, index) => (
                   <div key={index} className="flex justify-between text-amber-900">
                     <span>{event.type}</span>
-                    <span className="font-mono">{formatTime(event.time)}{event.temperature && ` / ${event.temperature}°C`}</span>
+                    <span className="font-mono">{formatTime(event.time)}{event.temperature && ` / ${event.temperature}°C`}{event.ror && ` (${event.ror}°C/min)`}</span>
                   </div>
                 ))}
                   </div>
