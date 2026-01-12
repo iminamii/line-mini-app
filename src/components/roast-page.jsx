@@ -6,6 +6,11 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { AppLogo } from '@/components/app-logo'
+import { QuickTemperatureInput } from '@/components/quick-temperature-input.jsx'
+
+// DEBUG: Set to true to speed up timer by 5x
+const DEBUG_SPEED_UP = true
+const DEBUG_SPEED_MULTIPLIER = 5
 
 function RoastPage() {
   const navigate = useNavigate()
@@ -13,6 +18,14 @@ function RoastPage() {
   const [isRunning, setIsRunning] = useState(true)
   const [isFinished, setIsFinished] = useState(false)
   const intervalRef = useRef(null)
+  const startRecordedRef = useRef(false)
+
+  // Visual feedback state for temperature recording popup
+  const [lastRecordedTemp, setLastRecordedTemp] = useState(null)
+  const [showToast, setShowToast] = useState(false)
+
+  // Quick temperature input state
+  const [selectedBaseTemp, setSelectedBaseTemp] = useState(null)
 
   // Phase states
   const [dryEndDone, setDryEndDone] = useState(false)
@@ -39,7 +52,7 @@ function RoastPage() {
   }
 
   const addEvent = useCallback(
-    (type) => {
+    (type, temp = null) => {
       setRoastData((prev) => ({
         ...prev,
         events: [
@@ -47,7 +60,7 @@ function RoastPage() {
           {
             type,
             time: seconds,
-            temperature: prev.currentTemp,
+            temperature: temp !== null ? temp.toString() : prev.currentTemp,
           },
         ],
       }))
@@ -81,8 +94,31 @@ function RoastPage() {
     navigate('/')
   }
 
+  // Hide toast after 2 seconds
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false)
+        setLastRecordedTemp(null)
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [showToast])
+
+  // Initialize with ambient temperature from session and record start event
+  useEffect(() => {
+    const session = JSON.parse(localStorage.getItem('currentRoastSession') || '{}')
+    if (session.temperature && parseInt(session.temperature) > 0 && !startRecordedRef.current) {
+      // Set the temperature field and record start event
+      setRoastData((prev) => ({ ...prev, currentTemp: session.temperature }))
+      addEvent(`気温: ${session.temperature}°C`, parseInt(session.temperature))
+      startRecordedRef.current = true
+    }
+  }, []) // Run once on mount
+
   useEffect(() => {
     if (isRunning) {
+      const intervalMs = DEBUG_SPEED_UP ? (1000 / DEBUG_SPEED_MULTIPLIER) : 1000
       intervalRef.current = setInterval(() => {
         setSeconds((prev) => {
           // Max 99:59 (5999 seconds)
@@ -93,7 +129,7 @@ function RoastPage() {
           }
           return prev + 1
         })
-      }, 1000)
+      }, intervalMs)
     }
 
     return () => {
@@ -104,45 +140,85 @@ function RoastPage() {
   }, [isRunning])
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4">
-      <div className="mx-auto max-w-md">
+    <main className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4 flex flex-col">
+      <div className="mx-auto max-w-md flex-1 overflow-y-auto pb-56">
         <div className="mb-4 flex justify-center">
           <AppLogo />
         </div>
 
-        {/* Timer Display */}
-        <Card className="mb-4 border-amber-300 bg-gradient-to-br from-amber-800 to-amber-900 shadow-xl">
-          <CardContent className="py-6 text-center">
-            <div className="font-mono text-6xl font-bold tracking-wider text-amber-100">{formatTime(seconds)}</div>
-            <p className="mt-2 text-sm text-amber-300">{isFinished ? '焙煎完了' : '焙煎中...'}</p>
+        {/* Timer Display - ID: timer-card */}
+        <Card id="timer-card" className="mb-3 border-amber-300 bg-gradient-to-br from-amber-800 to-amber-900 shadow-md">
+          <CardContent className="py-3 flex items-center justify-center gap-3">
+            <div className="font-mono text-2xl font-bold tracking-wider text-amber-100">{formatTime(seconds)}</div>
+            <p className="text-xs text-amber-300">{isFinished ? '焙煎完了' : '焙煎中...'}</p>
           </CardContent>
         </Card>
 
-        {/* Current Temperature - Always Visible */}
-        <Card className="mb-4 border-amber-200 bg-white/90 shadow-md">
+        {/* Quick Temperature Input - ID: quick-temp-input */}
+        {!isFinished && (
+          <div id="quick-temp-input">
+            <QuickTemperatureInput
+              selectedBaseTemp={selectedBaseTemp}
+              onBaseTempChange={setSelectedBaseTemp}
+              onRecordTemperature={(temp) => {
+                // Add temperature recording as an event with the correct temp value
+                addEvent(`温度記録: ${temp}°C`, temp)
+                // Also update currentTemp
+                setRoastData((prev) => ({ ...prev, currentTemp: temp.toString() }))
+                // Show toast popup
+                setLastRecordedTemp(temp)
+                setShowToast(true)
+              }}
+              elapsedSeconds={seconds}
+              isFinished={isFinished}
+              ambientTemp={roastData.temperature}
+              onStartRoast={() => {
+                // Auto-record ambient temperature at start
+                if (roastData.temperature && parseInt(roastData.temperature) > 0) {
+                  addEvent(`気温: ${roastData.temperature}°C`, parseInt(roastData.temperature))
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {/* Current Temperature Input - ID: current-temp-input */}
+        <Card id="current-temp-input" className="mb-4 border-amber-200 bg-white/90 shadow-md relative">
+          {/* Floating Toast Popup - positioned above current-temp-input with absolute positioning */}
+          <div 
+            className={`absolute top-3 left-1/2 -translate-x-1/2 z-20 transition-all duration-300 pointer-events-none ${
+              showToast 
+                ? 'opacity-100 transform -translate-y-1' 
+                : 'opacity-0 transform translate-y-0'
+            }`}
+          >
+            <div className="bg-amber-600 text-white px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
+              <span className="font-bold">{lastRecordedTemp}°C</span> を記録
+            </div>
+          </div>
           <CardContent className="py-4">
-            <div className="flex items-center gap-4">
-              <Label htmlFor="currentTemp" className="w-24 text-amber-900 font-medium">
-                現在温度
-              </Label>
+            <div className="relative">
               <Input
                 id="currentTemp"
                 type="number"
                 inputMode="numeric"
                 value={roastData.currentTemp}
                 onChange={(e) => setRoastData((prev) => ({ ...prev, currentTemp: e.target.value }))}
-                placeholder="°C"
-                className="border-amber-200 text-center text-lg font-bold"
+                placeholder=""
+                className="border-amber-200 text-center text-lg font-bold pr-12"
                 disabled={isFinished}
               />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold pointer-events-none">
+                °C
+              </span>
             </div>
           </CardContent>
         </Card>
 
         {!isFinished && (
           <>
-            {/* Phase Buttons */}
-            <Card className="mb-4 border-amber-200 bg-white/90 shadow-md">
+            {/* Phase Buttons - ID: phase-buttons */}
+            <Card id="phase-buttons" className="mb-4 border-amber-200 bg-white/90 shadow-md">
               <CardContent className="space-y-3 py-4">
                 {/* Dry End / Gold Point */}
                 <div className="grid grid-cols-2 gap-3">
@@ -316,13 +392,6 @@ function RoastPage() {
               </CardContent>
             </Card>
 
-            {/* Finish Button */}
-            <Button
-              onClick={handleFinish}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 py-6 text-lg font-bold text-white shadow-lg hover:from-red-700 hover:to-red-800"
-            >
-              焙煎終了
-            </Button>
           </>
         )}
 
@@ -370,6 +439,18 @@ function RoastPage() {
           </Card>
         )}
       </div>
+
+      {/* Fixed Finish Button - always visible at bottom */}
+      {!isFinished && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-amber-50 to-transparent">
+          <Button
+            onClick={handleFinish}
+            className="mx-auto max-w-md w-full bg-gradient-to-r from-red-600 to-red-700 text-lg font-bold text-white shadow-lg hover:from-red-700 hover:to-red-800 block h-14 leading-tight"
+          >
+            焙煎終了
+          </Button>
+        </div>
+      )}
     </main>
   )
 }
