@@ -214,7 +214,6 @@ function RoastPage() {
                   </div>
                 ))}
               </div>
-              <div className="space-y-2"><Label htmlFor="afterAmount" className="text-green-800">焙煎後の量 (g)</Label><Input id="afterAmount" type="number" inputMode="numeric" value={roastData.afterAmount} onChange={(e) => setRoastData((prev) => ({ ...prev, afterAmount: e.target.value }))} placeholder="焙煎後の重量" className="border-green-200" /></div>
               <Button onClick={handleSave} className="w-full bg-gradient-to-r from-green-600 to-green-700 py-6 text-lg font-bold text-white shadow-md hover:from-green-700 hover:to-green-800">保存してホームへ</Button>
             </CardContent>
           </Card>
