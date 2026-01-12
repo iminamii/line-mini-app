@@ -161,7 +161,7 @@ function RoastPage() {
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold pointer-events-none">°C</span>
               </div>
               <div className="flex flex-col justify-center">
-                <div className="text-xs text-amber-600 font-bold">RoR</div>
+                <div className="flex gap-2"><div className="text-center"><div className="text-xs text-amber-600 font-bold">RoR</div><div className="text-sm font-mono text-amber-800">${currentRor || "--"}°C/min</div></div><div className="text-center"><div className="text-xs text-amber-600 font-bold">PreRoR</div><div className="text-sm font-mono text-amber-800">${preRor || "--"}°C/min</div></div></div>
                 <div className="text-sm font-mono text-amber-800">{currentRor ? `${currentRor}°C/min` : '--'}</div>
               </div>
             </div>
@@ -204,7 +204,7 @@ function RoastPage() {
             <CardContent className="space-y-4 py-6">
               <h3 className="font-bold text-green-800">焙煎完了</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded p-3"><div className="text-xs text-amber-600 font-bold">RoR</div><div className="text-lg font-mono text-amber-800">{currentRor ? `${currentRor}°C/min` : '--'}</div></div>
+                <div className="bg-white rounded p-3"><div className="flex gap-2"><div className="text-center"><div className="text-xs text-amber-600 font-bold">RoR</div><div className="text-sm font-mono text-amber-800">${currentRor || "--"}°C/min</div></div><div className="text-center"><div className="text-xs text-amber-600 font-bold">PreRoR</div><div className="text-sm font-mono text-amber-800">${preRor || "--"}°C/min</div></div></div><div className="text-lg font-mono text-amber-800">{currentRor ? `${currentRor}°C/min` : '--'}</div></div>
                 <div className="bg-white rounded p-3"><div className="text-xs text-amber-600 font-bold">PreRoR</div><div className="text-lg font-mono text-amber-800">{preRor ? `${preRor}°C/min` : '--'}</div></div>
               </div>
               <div className="space-y-1 rounded bg-white p-3 text-sm">
