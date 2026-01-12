@@ -216,7 +216,8 @@ function RoastPage() {
                 ))}
                   </div>
                 </div>
-              </CardContent>
+              </div>
+            </CardContent>
           </Card>
         )}
       </div>
