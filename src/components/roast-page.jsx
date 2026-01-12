@@ -58,10 +58,10 @@ function RoastPage() {
     return (tempDiff / (timeDiffSeconds / 60)).toFixed(1)
   }
 
-  const addEvent = useCallback((type, temp = null) => {
+  const addEvent = useCallback((type, temp = null, ror = null) => {
     setRoastData((prev) => ({
       ...prev,
-      events: [...prev.events, { type, time: seconds, temperature: temp !== null ? temp.toString() : prev.currentTemp }],
+      events: [...prev.events, { type, time: seconds, temperature: temp !== null ? temp.toString() : prev.currentTemp, ror }],
     }))
   }, [seconds])
 
@@ -93,7 +93,7 @@ function RoastPage() {
     const session = JSON.parse(localStorage.getItem('currentRoastSession') || '{}')
     if (session.temperature && parseInt(session.temperature) > 0 && !startRecordedRef.current) {
       setRoastData((prev) => ({ ...prev, currentTemp: session.temperature }))
-      addEvent(`気温: ${session.temperature}°C`, parseInt(session.temperature))
+      addEvent('気温', parseInt(session.temperature))
       setLastTempRecord({ temp: parseInt(session.temperature), time: 0 })
       startRecordedRef.current = true
     }
@@ -129,10 +129,12 @@ function RoastPage() {
               onBaseTempChange={setSelectedBaseTemp}
               onRecordTemperature={(temp) => {
                 setPreRor(currentRor)
-                const ror = calculateRor(temp, seconds)
+                const tempDiff = temp - lastTempRecord.temp
+                const timeDiffSeconds = seconds - lastTempRecord.time
+                const ror = timeDiffSeconds > 0 ? (tempDiff / (timeDiffSeconds / 60)).toFixed(1) : null
                 setCurrentRor(ror)
                 setLastTempRecord({ temp, time: seconds })
-                addEvent(`温度記録: ${temp}°C`, temp)
+                addEvent('温度記録', temp, ror)
                 setRoastData((prev) => ({ ...prev, currentTemp: temp.toString() }))
                 setLastRecordedTemp(temp)
                 setShowToast(true)
@@ -142,7 +144,7 @@ function RoastPage() {
               ambientTemp={roastData.temperature}
               onStartRoast={() => {
                 if (roastData.temperature && parseInt(roastData.temperature) > 0) {
-                  addEvent(`気温: ${roastData.temperature}°C`, parseInt(roastData.temperature), null)
+                  addEvent('気温', parseInt(roastData.temperature))
                   setLastTempRecord({ temp: parseInt(roastData.temperature), time: 0 })
                 }
               }}
@@ -205,15 +207,21 @@ function RoastPage() {
             <CardContent className="space-y-4 py-6">
               <h3 className="font-bold text-green-800">焙煎完了</h3>
               <div className="bg-white rounded p-3">
-                <div className="space-y-1 text-sm">
-                  {roastData.events.map((event, index) => (
-                  <div key={index} className="flex justify-between text-amber-900">
-                    <span>{event.type}</span>
-                    <span className="font-mono">{formatTime(event.time)}{event.temperature && ` / ${event.temperature}°C`}{event.ror && ` (${event.ror}°C/min)`}</span>
+                <div className="grid grid-cols-4 gap-2 text-sm font-bold text-green-700 border-b border-green-200 pb-1 mb-1">
+                  <span>イベント</span>
+                  <span className="text-center">時間</span>
+                  <span className="text-center">温度</span>
+                  <span className="text-center">RoR</span>
+                </div>
+                {roastData.events.map((event, index) => (
+                  <div key={index} className="grid grid-cols-4 gap-2 text-sm">
+                    <span className="text-amber-900 truncate">{event.type}</span>
+                    <span className="font-mono text-center text-amber-800">{formatTime(event.time)}</span>
+                    <span className="font-mono text-center text-amber-800">{event.temperature ? `${event.temperature}°C` : '-'}</span>
+                    <span className="font-mono text-center text-amber-800">{event.ror ? `${event.ror}°C/min` : '-'}</span>
                   </div>
                 ))}
-                  </div>
-                </div>
+              </div>
               <div className="space-y-2"><Label htmlFor="afterAmount" className="text-green-800">焙煎後の量 (g)</Label><Input id="afterAmount" type="number" inputMode="numeric" value={roastData.afterAmount} onChange={(e) => setRoastData((prev) => ({ ...prev, afterAmount: e.target.value }))} placeholder="焙煎後の重量" className="border-green-200" /></div>
               <Button onClick={handleSave} className="w-full bg-gradient-to-r from-green-600 to-green-700 py-6 text-lg font-bold text-white shadow-md hover:from-green-700 hover:to-green-800">保存してホームへ</Button>
             </CardContent>
