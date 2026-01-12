@@ -161,7 +161,6 @@ function RoastPage() {
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold pointer-events-none">°C</span>
               </div>
             <Card id="phase-buttons" className="mb-4 border-amber-200 bg-white/90 shadow-md">
-              </div>
               <CardContent className="space-y-3 py-4">
                 <div className="grid grid-cols-2 gap-3">
                   {!dryEndDone ? <Button onClick={() => { setDryEndDone(true); addEvent('ドライエンド'); if (lastTempRecord.temp !== null) setPreRorTempRecord({ temp: lastTempRecord.temp, time: seconds }) }} className="bg-amber-600 text-white hover:bg-amber-700">ドライエンド</Button> : <Button disabled className="bg-amber-200 text-amber-600">ドライエンド済</Button>}
@@ -189,6 +188,7 @@ function RoastPage() {
                 <div className="space-y-1"><Label htmlFor="roastMemo" className="text-sm text-amber-900">メモ</Label><Textarea id="roastMemo" value={roastData.memo} onChange={(e) => setRoastData((prev) => ({ ...prev, memo: e.target.value }))} className="border-amber-200 resize-none" rows={2} /></div>
               </CardContent>
             </Card>
+            </div>
           </>
         )}
         {isFinished && (
