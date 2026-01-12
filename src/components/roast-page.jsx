@@ -214,7 +214,6 @@ function RoastPage() {
                   </div>
                 ))}
               </div>
-              <Button onClick={handleSave} className="w-full bg-gradient-to-r from-green-600 to-green-700 py-6 text-lg font-bold text-white shadow-md hover:from-green-700 hover:to-green-800">保存してホームへ</Button>
             </CardContent>
           </Card>
         )}
