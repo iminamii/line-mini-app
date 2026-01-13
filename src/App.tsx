@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { AppLogo } from '@/components/app-logo'
 import { RoastTemplateForm } from '@/components/roast-template-form'
 import { RoastPage } from '@/components/roast-page'
+import { RoastLogDetails } from '@/components/roast-log-details'
 
 interface RoastTemplate {
   id: string
@@ -34,6 +35,7 @@ interface RoastSession {
 function HomePage() {
   const navigate = useNavigate()
   const [templates, setTemplates] = useState<RoastTemplate[]>([])
+  const [roastLogs, setRoastLogs] = useState<any[]>([])
   const [formData, setFormData] = useState<RoastSession>({
     templateId: '',
     templateName: '',
@@ -47,8 +49,27 @@ function HomePage() {
   const [errors, setErrors] = useState<{ templateId?: string; amount?: string }>({})
 
   useEffect(() => {
-    const savedTemplates = JSON.parse(localStorage.getItem('roastTemplates') || '[]')
-    setTemplates(savedTemplates)
+    const DATA_VERSION = '2025-01-13-cleanup'
+    const currentVersion = localStorage.getItem('dataVersion')
+
+    if (currentVersion !== DATA_VERSION) {
+      // Clear old data
+      localStorage.removeItem('roastTemplates')
+      localStorage.removeItem('roastLogs')
+      localStorage.removeItem('currentRoastSession')
+      localStorage.setItem('dataVersion', DATA_VERSION)
+      
+      // Initialize with empty state
+      setTemplates([])
+      setRoastLogs([])
+    } else {
+      // Load data normally
+      const savedTemplates = JSON.parse(localStorage.getItem('roastTemplates') || '[]')
+      setTemplates(savedTemplates)
+      const savedLogs = JSON.parse(localStorage.getItem('roastLogs') || '[]')
+      // Sort logs by date descending
+      setRoastLogs(savedLogs.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()))
+    }
   }, [])
 
   const handleChange = (field: keyof RoastSession, value: string) => {
@@ -230,6 +251,62 @@ function HomePage() {
             </Button>
           </CardContent>
         </Card>
+
+        {roastLogs.length > 0 && (
+          <div className="mt-8 space-y-4">
+            <h2 className="text-lg font-bold text-amber-900 flex items-center gap-2">
+              <span className="w-1 h-6 bg-amber-700 rounded-full"></span>
+              過去の焙煎記録
+            </h2>
+            <div className="space-y-3">
+              {roastLogs.map((log) => {
+                const date = new Date(log.createdAt).toLocaleDateString('ja-JP', {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+                const before = parseFloat(log.amount)
+                const after = parseFloat(log.afterAmount)
+                const weightLoss = before && after ? (((before - after) / before) * 100).toFixed(1) : null
+                const roastIndex = before && after && after > 0 ? (before / after).toFixed(3) : null
+
+                return (
+                  <Card
+                    key={log.id}
+                    className="border-amber-100 bg-white/60 hover:bg-white/90 transition-colors cursor-pointer shadow-sm"
+                    onClick={() => navigate(`/log/${log.id}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="font-bold text-amber-950">{log.templateName}</div>
+                        <div className="text-xs text-amber-600 font-mono">{date}</div>
+                      </div>
+                      <div className="flex gap-4 text-sm">
+                        <div className="text-amber-800">
+                          <span className="text-xs text-amber-500 mr-1">量:</span>
+                          {log.amount}g
+                        </div>
+                        {weightLoss && (
+                          <div className="text-amber-800">
+                            <span className="text-xs text-amber-500 mr-1">減少:</span>
+                            {weightLoss}%
+                          </div>
+                        )}
+                        {roastIndex && (
+                          <div className="text-amber-800">
+                            <span className="text-xs text-amber-500 mr-1">指数:</span>
+                            {roastIndex}
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   )
@@ -256,8 +333,22 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/template" element={<TemplatePage />} />
         <Route path="/roast" element={<RoastPage />} />
+        <Route path="/log/:id" element={<LogDetailsPage />} />
       </Routes>
     </BrowserRouter>
+  )
+}
+
+function LogDetailsPage() {
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4">
+      <div className="mx-auto max-w-md">
+        <div className="mb-6 flex justify-center">
+          <AppLogo />
+        </div>
+        <RoastLogDetails />
+      </div>
+    </main>
   )
 }
 

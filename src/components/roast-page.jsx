@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { AppLogo } from '@/components/app-logo'
 import { QuickTemperatureInput } from '@/components/quick-temperature-input.jsx'
 
-const DEBUG_SPEED_UP = true
+const DEBUG_SPEED_UP = false
 const DEBUG_SPEED_MULTIPLIER = 5
 
 function RoastPage() {
@@ -31,6 +31,7 @@ function RoastPage() {
   const [preRorTempRecord, setPreRorTempRecord] = useState({ temp: null, time: null })
   const [currentRor, setCurrentRor] = useState(null)
   const [preRor, setPreRor] = useState(null)
+  const [sessionData, setSessionData] = useState(null)
 
   const [roastData, setRoastData] = useState({
     events: [],
@@ -58,6 +59,42 @@ function RoastPage() {
     return (tempDiff / (timeDiffSeconds / 60)).toFixed(1)
   }
 
+  const calculateDTR = () => {
+    const firstCrackEvent = roastData.events.find((e) => e.type === '1ハゼ開始')
+    if (!firstCrackEvent || !seconds) return null
+    const devTime = seconds - firstCrackEvent.time
+    return ((devTime / seconds) * 100).toFixed(1)
+  }
+
+  const calculateWeightLoss = () => {
+    if (!sessionData?.amount || !roastData.afterAmount) return null
+    const before = parseFloat(sessionData.amount)
+    const after = parseFloat(roastData.afterAmount)
+    if (isNaN(before) || isNaN(after) || before <= 0) return null
+    return (((before - after) / before) * 100).toFixed(1)
+  }
+
+  const calculateRoastIndex = () => {
+    if (!sessionData?.amount || !roastData.afterAmount) return null
+    const before = parseFloat(sessionData.amount)
+    const after = parseFloat(roastData.afterAmount)
+    if (isNaN(before) || isNaN(after) || after <= 0) return null
+    return (before / after).toFixed(3)
+  }
+
+  const getRoastLevel = (loss) => {
+    if (!loss) return ''
+    const l = parseFloat(loss)
+    if (l < 13) return 'ライトロースト (極浅煎り)'
+    if (l < 14) return 'シナモンロースト (浅煎り)'
+    if (l < 16) return 'ミディアムロースト (中浅煎り)'
+    if (l < 17) return 'ハイロースト (中煎り)'
+    if (l < 19) return 'シティロースト (中深煎り)'
+    if (l < 21) return 'フルシティロースト (深煎り)'
+    if (l < 23) return 'フレンチロースト (極深煎り)'
+    return 'イタリアンロースト (極深煎り)'
+  }
+
   const addEvent = useCallback((type, temp = null, ror = null) => {
     setRoastData((prev) => ({
       ...prev,
@@ -83,6 +120,10 @@ function RoastPage() {
   }
 
   useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
     if (showToast) {
       const timer = setTimeout(() => { setShowToast(false); setLastRecordedTemp(null) }, 2000)
       return () => clearTimeout(timer)
@@ -91,6 +132,7 @@ function RoastPage() {
 
   useEffect(() => {
     const session = JSON.parse(localStorage.getItem('currentRoastSession') || '{}')
+    setSessionData(session)
     if (session.temperature && parseInt(session.temperature) > 0 && !startRecordedRef.current) {
       setRoastData((prev) => ({ ...prev, currentTemp: session.temperature }))
       addEvent('気温', parseInt(session.temperature))
@@ -115,7 +157,7 @@ function RoastPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 px-4 pb-20 flex flex-col overflow-x-hidden">
       <div className="mx-auto max-w-md w-full flex-1 overflow-y-auto">
-        <div className="mb-4 flex justify-center"><AppLogo /></div>
+        <div className="mb-4 pt-6 flex justify-center"><AppLogo /></div>
         <Card id="timer-card" className="mb-3 border-amber-300 bg-gradient-to-br from-amber-800 to-amber-900 shadow-md">
           <CardContent className="py-3 flex items-center justify-center gap-3">
             <div className="font-mono text-2xl font-bold tracking-wider text-amber-100">{formatTime(seconds)}</div>
@@ -151,25 +193,27 @@ function RoastPage() {
             />
           </div>
         )}
-        <Card id="current-temp-input" className="mb-4 border-amber-200 bg-white/90 shadow-md relative">
-          <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-20 transition-all duration-300 pointer-events-none ${showToast ? 'opacity-100 transform -translate-y-1' : 'opacity-0 transform translate-y-0'}`}>
-            <div className="bg-amber-600 text-white px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
-              <span className="font-bold">{lastRecordedTemp}°C</span> を記録
-            </div>
-          </div>
-          <CardContent className="py-4">
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2 relative">
-                <Input id="currentTemp" type="number" inputMode="numeric" value={roastData.currentTemp} onChange={(e) => setRoastData((prev) => ({ ...prev, currentTemp: e.target.value }))} placeholder="" className="border-amber-200 text-center text-lg font-bold pr-12" disabled={isFinished} />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold pointer-events-none">°C</span>
-              </div>
-              <div className="flex flex-col justify-center">
-                <div className="text-xs text-amber-600 font-bold">RoR</div>
-                <div className="text-sm font-mono text-amber-800">{currentRor ? `${currentRor}°C/min` : '--'}</div>
+        {!isFinished && (
+          <Card id="current-temp-input" className="mb-4 border-amber-200 bg-white/90 shadow-md relative">
+            <div className={`absolute top-3 left-1/2 -translate-x-1/2 z-20 transition-all duration-300 pointer-events-none ${showToast ? 'opacity-100 transform -translate-y-1' : 'opacity-0 transform translate-y-0'}`}>
+              <div className="bg-amber-600 text-white px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
+                <span className="font-bold">{lastRecordedTemp}°C</span> を記録
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <CardContent className="py-4">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2 relative">
+                  <Input id="currentTemp" type="number" inputMode="numeric" value={roastData.currentTemp} onChange={(e) => setRoastData((prev) => ({ ...prev, currentTemp: e.target.value }))} placeholder="" className="border-amber-200 text-center text-lg font-bold pr-12" disabled={isFinished} />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600 font-bold pointer-events-none">°C</span>
+                </div>
+                <div className="flex flex-col justify-center">
+                  <div className="text-xs text-amber-600 font-bold">RoR</div>
+                  <div className="text-sm font-mono text-amber-800">{currentRor ? `${currentRor}°C/min` : '--'}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {!isFinished && (
           <>
             <Card id="phase-buttons" className="mb-4 border-amber-200 bg-white/90 shadow-md">
@@ -205,7 +249,14 @@ function RoastPage() {
         {isFinished && (
           <Card className="mb-4 border-green-200 bg-green-50 shadow-md">
             <CardContent className="space-y-4 py-6">
-              <h3 className="font-bold text-green-800">焙煎完了</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold text-green-800">焙煎完了</h3>
+                {calculateDTR() && (
+                  <div className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-bold">
+                    DTR: {calculateDTR()}%
+                  </div>
+                )}
+              </div>
               <div className="bg-white rounded p-3">
                 <div className="grid grid-cols-4 gap-2 text-sm font-bold text-green-700 border-b border-green-200 pb-1 mb-1">
                   <span>イベント</span>
@@ -222,7 +273,31 @@ function RoastPage() {
                   </div>
                 ))}
               </div>
-              <div className="space-y-2"><Label htmlFor="afterAmount" className="text-green-800">焙煎後の量 (g)</Label><Input id="afterAmount" type="number" inputMode="numeric" value={roastData.afterAmount} onChange={(e) => setRoastData((prev) => ({ ...prev, afterAmount: e.target.value }))} placeholder="焙煎後の重量" className="border-green-200" /></div>
+              <div className="space-y-2">
+                <Label htmlFor="afterAmount" className="text-green-800">焙煎後の量 (g)</Label>
+                <div className="flex gap-4 items-center">
+                  <Input id="afterAmount" type="number" inputMode="numeric" value={roastData.afterAmount} onChange={(e) => setRoastData((prev) => ({ ...prev, afterAmount: e.target.value }))} placeholder="焙煎後の重量" className="border-green-200" />
+                  <div className="flex gap-3">
+                    {calculateWeightLoss() && (
+                      <div className="text-right whitespace-nowrap">
+                        <div className="text-lg font-bold text-green-700">{calculateWeightLoss()}%</div>
+                        <div className="text-[10px] leading-none text-green-600">減少率</div>
+                      </div>
+                    )}
+                    {calculateRoastIndex() && (
+                      <div className="text-right whitespace-nowrap border-l border-green-200 pl-3">
+                        <div className="text-lg font-bold text-green-700">{calculateRoastIndex()}</div>
+                        <div className="text-[10px] leading-none text-green-600">焙煎指数</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {calculateWeightLoss() && (
+                  <div className="text-sm text-center text-amber-800 bg-amber-50 py-1 rounded font-medium">
+                    目安: {getRoastLevel(calculateWeightLoss())}
+                  </div>
+                )}
+              </div>
               <Button onClick={handleSave} className="w-full bg-gradient-to-r from-green-600 to-green-700 py-6 text-lg font-bold text-white shadow-md hover:from-green-700 hover:to-green-800">保存してホームへ</Button>
             </CardContent>
           </Card>
