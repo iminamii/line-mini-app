@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
 export function RoastLogDetails() {
   const { id } = useParams()
@@ -62,6 +63,17 @@ export function RoastLogDetails() {
     return 'イタリアンロースト (極深煎り)'
   }
 
+  const chartData = log.events
+    .filter((e: any) => e.temperature || e.ror)
+    .sort((a: any, b: any) => a.time - b.time)
+    .map((e: any) => ({
+      time: e.time,
+      formattedTime: formatTime(e.time),
+      temperature: e.temperature ? parseFloat(e.temperature) : null,
+      ror: e.ror ? parseFloat(e.ror) : null,
+      type: e.type !== '温度記録' && e.type !== '気温' ? e.type : null // イベント名を表示用に追加
+    }))
+
   return (
     <div className="space-y-4">
       <Button 
@@ -117,6 +129,70 @@ export function RoastLogDetails() {
           {weightLoss && (
             <div className="text-sm text-center text-amber-800 bg-amber-50 py-2 rounded font-medium border border-amber-100">
               焙煎度目安: {getRoastLevel(weightLoss)}
+            </div>
+          )}
+
+          {chartData.length > 0 && (
+            <div className="space-y-6 pt-4 border-t border-amber-100">
+              <div className="h-[250px] w-full">
+                <h4 className="text-sm font-bold text-amber-900 mb-2 text-center">温度推移 (°C)</h4>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#fcd34d" vertical={false} />
+                    <XAxis 
+                      dataKey="formattedTime" 
+                      stroke="#78350f" 
+                      tick={{ fontSize: 10 }}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis stroke="#78350f" domain={['auto', 'auto']} tick={{ fontSize: 10 }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', border: '1px solid #fbbf24' }}
+                      labelStyle={{ color: '#78350f', fontWeight: 'bold' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="temperature" 
+                      stroke="#d97706" 
+                      strokeWidth={2} 
+                      dot={{ r: 3, fill: '#d97706' }}
+                      activeDot={{ r: 5 }}
+                      name="温度"
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="h-[200px] w-full">
+                <h4 className="text-sm font-bold text-amber-900 mb-2 text-center">RoR 推移 (°C/min)</h4>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#fcd34d" vertical={false} />
+                    <XAxis 
+                      dataKey="formattedTime" 
+                      stroke="#78350f" 
+                      tick={{ fontSize: 10 }}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis stroke="#78350f" domain={['auto', 'auto']} tick={{ fontSize: 10 }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '8px', border: '1px solid #fbbf24' }}
+                      labelStyle={{ color: '#78350f', fontWeight: 'bold' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="ror" 
+                      stroke="#059669" 
+                      strokeWidth={2} 
+                      dot={{ r: 3, fill: '#059669' }}
+                      activeDot={{ r: 5 }}
+                      name="RoR"
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           )}
 
