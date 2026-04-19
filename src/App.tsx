@@ -10,6 +10,8 @@ import { AppLogo } from '@/components/app-logo'
 import { RoastTemplateForm } from '@/components/roast-template-form'
 import { RoastPage } from '@/components/roast-page'
 import { RoastLogDetails } from '@/components/roast-log-details'
+import { EnvironmentBadge } from '@/components/environment-badge'
+import { DataTransferTool } from '@/components/data-transfer-tool'
 
 interface RoastTemplate {
   id: string
@@ -118,7 +120,8 @@ function HomePage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4">
       <div className="mx-auto max-w-md">
-        <div className="mb-6 flex justify-center">
+        <div className="mb-6 flex flex-col items-center">
+          <EnvironmentBadge />
           <AppLogo />
         </div>
 
@@ -307,6 +310,8 @@ function HomePage() {
             </div>
           </div>
         )}
+
+        <DataTransferTool />
       </div>
     </main>
   )
